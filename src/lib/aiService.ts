@@ -1,4 +1,8 @@
+import { GoogleGenAI } from "@google/genai";
+
 export async function askPlayWiseAI(prompt: string, context?: any) {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  
   const systemPrompt = `
     You are PlayWise AI, a virtual assistant expert in child developmental psychology and educational toys.
     Your goal is to provide scientific, high-quality advice to parents.
@@ -13,34 +17,51 @@ export async function askPlayWiseAI(prompt: string, context?: any) {
   `;
 
   try {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
-        ],
-        model: 'glm-4-flash' 
-      })
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: [
+        { role: 'user', parts: [{ text: systemPrompt + "\n\nUser Question: " + prompt }] }
+      ]
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('AI Service Proxy Error:', response.status, errorData);
-      throw new Error(errorData.error || `Request failed with status ${response.status}`);
+    const text = response.text;
+    if (!text) {
+      throw new Error('Hệ thống AI trả về dữ liệu trống');
     }
-
-    const data = await response.json();
-    if (!data.choices?.[0]?.message?.content) {
-      console.error('AI Service Malformed Response:', data);
-      throw new Error('Hệ thống AI trả về dữ liệu không hợp lệ');
-    }
-    return data.choices[0].message.content;
+    return text;
   } catch (error: any) {
-    console.error("AI Service Component Error:", error);
+    console.error("AI Service Error:", error);
     return `Xin lỗi, đã xảy ra lỗi: ${error.message || 'Không thể kết nối với hệ thống AI'}. 
 
-Ba mẹ hãy kiểm tra lại BEEKNOEE_API_KEY trong phần Secrets của AI Studio.`;
+Ba mẹ hãy đảm bảo đã thiết lập GEMINI_API_KEY chính xác.`;
+  }
+}
+
+export async function chatWithGemini(messages: { role: 'user' | 'assistant', content: string }[]) {
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  
+  // Convert roles for Gemini
+  // Gemini uses 'user' and 'model' (assistant)
+  const history = messages.slice(0, -1).map(msg => ({
+    role: msg.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: msg.content }]
+  }));
+
+  const lastMessage = messages[messages.length - 1].content;
+
+  try {
+    const chat = ai.chats.create({
+      model: "gemini-3-flash-preview",
+      config: {
+        systemInstruction: "You are PlayWise AI, a helpful virtual assistant expert in child child development. Speak in Vietnamese."
+      },
+      history: history as any
+    });
+
+    const result = await chat.sendMessage({ message: lastMessage });
+    return result.text;
+  } catch (error: any) {
+    console.error("Gemini Chat Error:", error);
+    throw error;
   }
 }

@@ -19,51 +19,6 @@ async function startServer() {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   });
 
-  // Beeknoee Proxy Route
-  app.post('/api/chat', async (req, res) => {
-    try {
-      const { messages, model, temperature } = req.body;
-      const apiKey = process.env.BEEKNOEE_API_KEY;
-
-      if (!apiKey) {
-        console.error('BEEKNOEE_API_KEY environment variable is missing');
-        return res.status(500).json({ error: 'Beeknoee API key is missing. Please set it in AI Studio Secrets.' });
-      }
-
-      console.log(`Proxying to Beeknoee: model=${model || 'glm-4-flash'}`);
-
-      const response = await fetch('https://platform.beeknoee.com/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: model || 'glm-4-flash',
-          messages,
-          temperature: temperature ?? 0.7,
-          stream: false
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Beeknoee API error: Status ${response.status}`, errorText);
-        return res.status(response.status).json({ 
-          error: 'Beeknoee API returned an error', 
-          details: errorText,
-          status: response.status 
-        });
-      }
-
-      const data = await response.json();
-      res.json(data);
-    } catch (error: any) {
-      console.error('Chat Proxy Critical Error:', error.message);
-      res.status(500).json({ error: 'Internal Server Error connecting to AI proxy', details: error.message });
-    }
-  });
-
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({

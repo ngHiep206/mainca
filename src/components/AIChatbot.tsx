@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Bot, User, Sparkles, ChevronDown, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { chatWithGemini } from '../lib/aiService';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, limit, deleteDoc, getDocs, writeBatch, doc } from 'firebase/firestore';
 
@@ -76,21 +77,11 @@ export default function AIChatbot() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...messages, userMessage],
-          model: selectedModel
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch response');
-
-      const data = await response.json();
+      const result = await chatWithGemini([...messages, userMessage]);
+      
       const assistantMessage: Message = {
         role: 'assistant',
-        content: data.choices[0].message.content
+        content: result || 'Xin lỗi, tôi không nhận được phản hồi.'
       };
       setMessages(prev => [...prev, assistantMessage]);
 
@@ -179,29 +170,10 @@ export default function AIChatbot() {
                   <h3 className="font-bold">PlayWise AI</h3>
                   <div className="relative">
                     <button 
-                      onClick={() => setShowModels(!showModels)}
-                      className="text-[10px] uppercase tracking-widest font-bold opacity-80 flex items-center gap-1 hover:opacity-100"
+                      className="text-[10px] uppercase tracking-widest font-bold opacity-80 flex items-center gap-1"
                     >
-                      {MODELS.find(m => m.id === selectedModel)?.name}
-                      <ChevronDown size={10} />
+                      Bản thử nghiệm thông minh
                     </button>
-                    
-                    {showModels && (
-                      <div className="absolute top-full left-0 mt-2 w-48 bg-white text-slate-900 rounded-xl shadow-xl border border-slate-100 py-2 z-10 overflow-hidden">
-                        {MODELS.map(model => (
-                          <button
-                            key={model.id}
-                            onClick={() => {
-                              setSelectedModel(model.id);
-                              setShowModels(false);
-                            }}
-                            className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 transition-colors ${selectedModel === model.id ? 'bg-brand-50 text-brand-600 font-bold' : ''}`}
-                          >
-                            {model.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
