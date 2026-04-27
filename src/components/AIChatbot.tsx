@@ -2,16 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Bot, User, Sparkles, ChevronDown, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { chatWithGemini } from '../lib/aiService';
+import { chatWithBeeknoee } from '../lib/aiService';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, limit, deleteDoc, getDocs, writeBatch, doc } from 'firebase/firestore';
 
 const MODELS = [
   { id: 'glm-4.5-flash', name: 'GLM 4.5 Flash' },
   { id: 'glm-4.7-flash', name: 'GLM 4.7 Flash' },
+  { id: 'openai/gpt-oss-120b', name: 'GPT OSS 120B' },
   { id: 'llama3.1-8b', name: 'Llama 3.1 8B' },
-  { id: 'qwen-3-235b-a22b-instruct-2507', name: 'Qwen 3 235B' },
-  { id: 'openai/gpt-oss-120b', name: 'GPT OSS 120B' }
+  { id: 'qwen-3-235b-a22b-instruct-2507', name: 'Qwen 3 235B' }
 ];
 
 interface Message {
@@ -77,7 +77,7 @@ export default function AIChatbot() {
     setIsLoading(true);
 
     try {
-      const result = await chatWithGemini([...messages, userMessage]);
+      const result = await chatWithBeeknoee([...messages, userMessage], selectedModel);
       
       const assistantMessage: Message = {
         role: 'assistant',
@@ -170,10 +170,29 @@ export default function AIChatbot() {
                   <h3 className="font-bold">PlayWise AI</h3>
                   <div className="relative">
                     <button 
-                      className="text-[10px] uppercase tracking-widest font-bold opacity-80 flex items-center gap-1"
+                      onClick={() => setShowModels(!showModels)}
+                      className="text-[10px] uppercase tracking-widest font-bold opacity-80 flex items-center gap-1 hover:opacity-100"
                     >
-                      Bản thử nghiệm thông minh
+                      {MODELS.find(m => m.id === selectedModel)?.name}
+                      <ChevronDown size={10} />
                     </button>
+                    
+                    {showModels && (
+                      <div className="absolute top-full left-0 mt-2 w-48 bg-white text-slate-900 rounded-xl shadow-xl border border-slate-100 py-2 z-10 overflow-hidden">
+                        {MODELS.map(model => (
+                          <button
+                            key={model.id}
+                            onClick={() => {
+                              setSelectedModel(model.id);
+                              setShowModels(false);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-xs hover:bg-slate-50 transition-colors ${selectedModel === model.id ? 'bg-brand-50 text-brand-600 font-bold' : ''}`}
+                          >
+                            {model.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
