@@ -10,10 +10,14 @@ import {
   Zap, 
   Heart,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Save
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { askPlayWiseAI } from '../lib/gemini';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const STEPS = [
   {
@@ -53,7 +57,9 @@ export default function Quiz() {
   });
   const [aiResult, setAiResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const navigate = useNavigate();
+  const { user, isMock } = useAuth();
 
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
@@ -85,6 +91,29 @@ export default function Quiz() {
     const result = await askPlayWiseAI(prompt, formData);
     setAiResult(result);
     setLoading(false);
+
+    // Auto-save if logged in
+    if (user && !isMock && result) {
+      saveQuizResult(result);
+    }
+  };
+
+  const saveQuizResult = async (analysis: string) => {
+    if (!user || isMock) return;
+    setSaveStatus('saving');
+    try {
+      await addDoc(collection(db, 'quizResults'), {
+        userId: user.uid,
+        childName: formData.name,
+        childMonths: formData.months,
+        analysis,
+        createdAt: serverTimestamp()
+      });
+      setSaveStatus('saved');
+    } catch (err) {
+      console.error('Save quiz results failed:', err);
+      setSaveStatus('error');
+    }
   };
 
   return (
@@ -222,6 +251,14 @@ export default function Quiz() {
                        <div className="prose prose-slate max-w-none text-slate-600 leading-loose whitespace-pre-wrap mb-10">
                           {aiResult}
                        </div>
+                       
+                       {saveStatus === 'saved' && (
+                         <div className="flex items-center gap-2 text-green-600 text-sm font-bold mb-6 bg-green-50 p-3 rounded-xl border border-green-100">
+                           <CheckCircle2 size={16} />
+                           Kết quả đã được sao lưu vào tài khoản của ba mẹ.
+                         </div>
+                       )}
+
                        <div className="flex flex-col sm:flex-row gap-4 pt-8 border-t border-slate-100">
                           <button onClick={() => navigate('/toys')} className="btn-primary w-full">Xem đồ chơi gợi ý</button>
                           <button onClick={() => navigate('/consultation')} className="btn-secondary w-full">Gặp chuyên gia 1:1</button>

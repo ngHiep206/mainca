@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { MessageSquare, X, Send, Bot, User, Sparkles, ChevronDown } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, User, Sparkles, ChevronDown, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, limit, deleteDoc, getDocs, writeBatch } from 'firebase/firestore';
 
 const MODELS = [
   { id: 'glm-4.5-flash', name: 'GLM 4.5 Flash' },
@@ -24,7 +26,7 @@ export default function AIChatbot() {
   const [selectedModel, setSelectedModel] = useState(MODELS[0].id);
   const [showModels, setShowModels] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { user } = useAuth();
+  const { user, isMock } = useAuth();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -39,6 +41,30 @@ export default function AIChatbot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load chat history from Firebase
+  useEffect(() => {
+    if (!user || isMock || !isOpen) return;
+
+    const q = query(
+      collection(db, 'chats'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'asc'),
+      limit(50)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const history = snapshot.docs.map(doc => ({
+        role: doc.data().role as 'user' | 'assistant',
+        content: doc.data().content
+      }));
+      if (history.length > 0) {
+        setMessages(history);
+      }
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'chats'));
+
+    return () => unsubscribe();
+  }, [user, isMock, isOpen]);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,11 +93,57 @@ export default function AIChatbot() {
         content: data.choices[0].message.content
       };
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Save to Firebase
+      if (user && !isMock) {
+        try {
+          const batch = writeBatch(db);
+          // Use auto-generated IDs
+          const userMsgRef = doc(collection(db, 'chats'));
+          const assistantMsgRef = doc(collection(db, 'chats'));
+          
+          batch.set(userMsgRef, {
+            ...userMessage,
+            userId: user.uid,
+            createdAt: serverTimestamp()
+          });
+          
+          batch.set(assistantMsgRef, {
+            ...assistantMessage,
+            userId: user.uid,
+            createdAt: serverTimestamp()
+          });
+          
+          await batch.commit();
+        } catch (err) {
+          console.error('Failed to save chat to Firebase:', err);
+        }
+      }
     } catch (err) {
       console.error(err);
       setMessages(prev => [...prev, { role: 'assistant', content: 'Xin lỗi, đã có lỗi xảy ra khi kết nối với AI. Vui lòng thử lại sau.' }]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const clearChat = async () => {
+    if (!user || isMock) {
+      setMessages([]);
+      return;
+    }
+
+    try {
+      const q = query(collection(db, 'chats'), where('userId', '==', user.uid));
+      const snapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      setMessages([]);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.DELETE, 'chats');
     }
   };
 
@@ -133,9 +205,20 @@ export default function AIChatbot() {
                   </div>
                 </div>
               </div>
-              <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-2">
+                {messages.length > 0 && (
+                  <button 
+                    onClick={clearChat}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/70 hover:text-white"
+                    title="Xóa cuộc trò chuyện"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                )}
+                <button onClick={() => setIsOpen(false)} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             {/* Messages */}

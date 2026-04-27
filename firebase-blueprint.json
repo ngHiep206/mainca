@@ -1,117 +1,75 @@
 {
   "entities": {
-    "UserProfile": {
+    "userProfile": {
       "title": "User Profile",
-      "description": "User account information and roles",
+      "description": "Stores basic user information and preferences.",
       "type": "object",
       "properties": {
-        "email": { "type": "string" },
+        "uid": { "type": "string" },
         "displayName": { "type": "string" },
-        "role": { "type": "string", "enum": ["user", "admin"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "role"]
+      "required": ["uid", "email"]
     },
-    "ChildProfile": {
+    "child": {
       "title": "Child Profile",
-      "description": "Information about a child including age and developmental stats",
+      "description": "Stores information about a child.",
       "type": "object",
       "properties": {
         "parentId": { "type": "string" },
         "name": { "type": "string" },
         "birthDate": { "type": "string", "format": "date-time" },
-        "gender": { "type": "string", "enum": ["male", "female", "other"] },
-        "skillScores": {
-          "type": "object",
-          "properties": {
-            "motorFine": { "type": "number" },
-            "motorGross": { "type": "number" },
-            "language": { "type": "number" },
-            "logic": { "type": "number" },
-            "emotional": { "type": "number" }
-          }
-        },
-        "shareCode": { "type": "string" },
+        "gender": { "type": "string" },
+        "skillScores": { "type": "object" },
         "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["parentId", "name", "birthDate"]
+      }
     },
-    "Milestone": {
-      "title": "Milestone Entry",
-      "description": "A developmental milestone achieved by a child",
+    "milestone": {
+      "title": "Milestone Log",
+      "description": "Logs child's developmental milestones.",
       "type": "object",
       "properties": {
-        "parentId": { "type": "string" },
         "childId": { "type": "string" },
+        "parentId": { "type": "string" },
         "title": { "type": "string" },
         "date": { "type": "string", "format": "date-time" },
         "description": { "type": "string" },
-        "type": { "type": "string", "enum": ["motor", "language", "logic", "emotional"] }
-      },
-      "required": ["parentId", "childId", "title", "date"]
-    },
-    "Toy": {
-      "title": "Toy Information",
-      "description": "Detailed toy metadata including scientific info and affiliate links",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "scientificExplanation": { "type": "string" },
-        "playGuide": { "type": "string" },
-        "ageRangeMin": { "type": "number" },
-        "ageRangeMax": { "type": "number" },
-        "skills": { 
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "price": { "type": "number" },
-        "affiliateLink": { "type": "string" },
-        "safetyCertificates": {
-          "type": "array",
-          "items": { "type": "string" }
-        },
-        "expertChoice": { "type": "boolean" },
-        "imageUrl": { "type": "string" },
+        "type": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["name", "description", "ageRangeMin", "ageRangeMax"]
+      }
     },
-    "ConsultationRequest": {
-      "title": "Consultation Request",
-      "description": "Requests for 1:1 expert consultations",
+    "quizResult": {
+      "title": "Quiz Result",
+      "description": "Stores AI analysis from developmental quiz.",
       "type": "object",
       "properties": {
         "userId": { "type": "string" },
-        "email": { "type": "string" },
-        "message": { "type": "string" },
-        "status": { "type": "string", "enum": ["pending", "contacted", "completed"] },
-        "scheduledAt": { "type": "string", "format": "date-time" },
+        "childName": { "type": "string" },
+        "childMonths": { "type": "integer" },
+        "analysis": { "type": "string" },
         "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["userId", "email", "message"]
+      }
     }
   },
   "firestore": {
     "/users/{userId}": {
-      "schema": "UserProfile",
-      "description": "Users of the platform"
+      "schema": "userProfile",
+      "description": "User profile document."
     },
     "/children/{childId}": {
-      "schema": "ChildProfile",
-      "description": "Children profiles registered by parents"
+      "schema": "child",
+      "description": "Child profile documents."
     },
     "/children/{childId}/milestones/{milestoneId}": {
-      "schema": "Milestone",
-      "description": "Milestones for a specific child"
+      "schema": "milestone",
+      "description": "Developmental milestones for children."
     },
-    "/toys/{toyId}": {
-      "schema": "Toy",
-      "description": "Educational toys database"
-    },
-    "/consultations/{requestId}": {
-      "schema": "ConsultationRequest",
-      "description": "Booking requests for expert support"
+    "/quizResults/{resultId}": {
+      "schema": "quizResult",
+      "description": "Saved AI analysis results."
     }
   }
 }
