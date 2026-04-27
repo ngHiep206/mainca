@@ -38,6 +38,8 @@ import {
   updateDoc
 } from 'firebase/firestore';
 
+import GoogleLoginButton from '../components/GoogleLoginButton';
+
 const SKILL_LABELS = [
   { key: 'motorFine', label: 'Vận động tinh', icon: Target },
   { key: 'motorGross', label: 'Vận động thô', icon: MapIcon },
@@ -224,12 +226,21 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center text-slate-800">
-        <div className="w-20 h-20 bg-brand-100 rounded-3xl flex items-center justify-center text-brand-600 mb-6">
-          <Baby size={40} />
-        </div>
-        <h2 className="text-2xl font-display font-bold mb-4">Vui lòng đăng nhập</h2>
-        <p className="text-slate-500 mb-8 max-w-sm">Hãy đăng nhập để lưu trữ nhật ký hành trình phát triển của bé yêu.</p>
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-8 text-center">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md w-full bg-slate-50 p-12 rounded-[3rem] border border-slate-100 shadow-sm"
+        >
+          <div className="w-20 h-20 bg-brand-100 rounded-3xl flex items-center justify-center text-brand-600 mb-8 mx-auto">
+            <Baby size={40} />
+          </div>
+          <h2 className="text-3xl font-display font-bold mb-4">Mở khóa hành trình của bé</h2>
+          <p className="text-slate-500 mb-10 leading-relaxed">
+            Đăng nhập bằng Google để lưu trữ nhật ký cột mốc, theo dõi biểu đồ kỹ năng và nhận gợi ý đồ chơi cá nhân hóa.
+          </p>
+          <GoogleLoginButton className="w-full py-4 text-lg shadow-lg" />
+        </motion.div>
       </div>
     );
   }

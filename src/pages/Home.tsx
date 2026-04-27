@@ -15,8 +15,12 @@ import {
   Gift
 } from 'lucide-react';
 
+import GoogleLoginButton from '../components/GoogleLoginButton';
+import { useAuth } from '../context/AuthContext';
+
 export default function Home() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="overflow-hidden">
@@ -149,6 +153,28 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Cloud Sync Section */}
+      {!user && (
+        <section className="py-24 bg-white relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 relative z-10">
+            <div className="bg-slate-50 rounded-[3rem] p-12 lg:p-20 border border-slate-100 flex flex-col items-center text-center">
+              <div className="w-20 h-20 bg-brand-100 text-brand-600 rounded-3xl flex items-center justify-center mb-8">
+                <ShieldCheck size={40} />
+              </div>
+              <h2 className="text-3xl lg:text-5xl font-display font-bold mb-6">Lưu trữ hành trình của bé trên đám mây</h2>
+              <p className="text-slate-600 text-lg mb-10 max-w-2xl">
+                Đăng nhập bằng tài khoản Google để đồng bộ nhật ký cột mốc, kết quả trắc nghiệm và các gợi ý cá nhân hóa trên mọi thiết bị.
+              </p>
+              <GoogleLoginButton text="Đăng nhập ngay với Google" className="scale-110 shadow-lg" />
+              <p className="mt-8 text-sm text-slate-400">Dữ liệu của bạn được bảo mật tuyệt đối theo tiêu chuẩn quốc tế.</p>
+            </div>
+          </div>
+          {/* Decorative backgrounds */}
+          <div className="absolute top-1/2 left-0 w-64 h-64 bg-brand-200/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
+          <div className="absolute top-1/2 right-0 w-64 h-64 bg-accent-soft/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+        </section>
+      )}
 
       {/* Social Proof / Stats */}
       <section className="py-24 bg-brand-50 mb-12">

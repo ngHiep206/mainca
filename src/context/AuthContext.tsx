@@ -28,9 +28,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async () => {
+    setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      // Ensure we are using popups as per best practices in this environment
+      // Force account selection to ensure they can pick their personal account
+      provider.setCustomParameters({ prompt: 'select_account' });
+      
       const result = await signInWithPopup(auth, provider);
       setIsMock(false);
 
@@ -40,23 +43,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await setDoc(doc(db, 'users', result.user.uid), {
           email: result.user.email,
           displayName: result.user.displayName,
+          photoURL: result.user.photoURL,
           role: 'user',
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         });
+      } else {
+        // Update last login
+        await setDoc(doc(db, 'users', result.user.uid), {
+          updatedAt: serverTimestamp()
+        }, { merge: true });
       }
-    } catch (err) {
-      console.error('Firebase Auth failed, entering Mock Mode:', err);
-      // Enter Mock Mode for preview if Real Auth fails (e.g. invalid API key or local dev)
-      const mockUser = {
-        uid: 'mock-user-123',
-        displayName: 'Phụ huynh (Demo Mode)',
-        email: 'parent@example.com',
-        photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mock-parent',
-        emailVerified: true,
-      } as User;
-      
-      setUser(mockUser);
-      setIsMock(true);
+    } catch (err: any) {
+      console.error('Auth Error:', err);
+      // Only use mock mode if specifically in a development environment without keys
+      if (err.code === 'auth/operation-not-supported-in-this-environment' || err.code === 'auth/invalid-api-key') {
+        console.warn('Entering Mock Mode due to environment constraints');
+        const mockUser = {
+          uid: 'mock-user-123',
+          displayName: 'Phụ huynh (Demo Mode)',
+          email: 'parent@example.com',
+          photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mock-parent',
+          emailVerified: true,
+        } as User;
+        setUser(mockUser);
+        setIsMock(true);
+      } else {
+        // Re-throw or handle user cancellation
+        if (err.code !== 'auth/popup-closed-by-user') {
+          alert('Đăng nhập thất bại. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.');
+        }
+      }
+    } finally {
       setLoading(false);
     }
   };

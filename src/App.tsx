@@ -25,6 +25,8 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AIChatbot from './components/AIChatbot';
 
+import GoogleLoginButton from './components/GoogleLoginButton';
+
 // Pages - I will create these shortly
 const Home = React.lazy(() => import('./pages/Home'));
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -82,18 +84,17 @@ function Header() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => navigate('/dashboard')}
-                  className="w-10 h-10 rounded-full border-2 border-brand-100 p-0.5"
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl hover:bg-slate-50 transition-colors"
                 >
-                  <img src={user.photoURL || ''} alt="" className="w-full h-full rounded-full" />
+                  <img src={user.photoURL || ''} alt="" className="w-8 h-8 rounded-full border border-brand-100" />
+                  <span className="text-sm font-bold text-slate-700 hidden lg:block">{user.displayName?.split(' ')[0]}</span>
                 </button>
-                <button onClick={logout} className="text-slate-400 hover:text-red-500 transition-colors">
+                <button onClick={logout} className="text-slate-400 hover:text-red-500 transition-colors p-2" title="Đăng xuất">
                   <LogOut size={20} />
                 </button>
               </div>
             ) : (
-              <button onClick={login} className="btn-primary py-2 px-6">
-                Bắt đầu ngay
-              </button>
+              <GoogleLoginButton text="Đăng nhập" className="py-2 px-6 h-11" />
             )}
           </div>
 
@@ -128,12 +129,9 @@ function Header() {
                 </Link>
               ))}
               {!user && (
-                <button
-                  onClick={() => { login(); setIsMenuOpen(false); }}
-                  className="w-full mt-4 btn-primary"
-                >
-                  Đăng nhập
-                </button>
+                <div className="pt-4">
+                  <GoogleLoginButton className="w-full" />
+                </div>
               )}
             </div>
           </motion.div>
