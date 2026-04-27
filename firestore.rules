@@ -8,11 +8,15 @@ service cloud.firestore {
 
     // --- Helpers ---
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null && request.auth.token.email_verified == true;
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
     function incoming() {
@@ -26,36 +30,51 @@ service cloud.firestore {
     // --- Entity Validations ---
 
     function isValidUserProfile(data) {
-      return data.keys().hasAll(['email', 'displayName', 'role', 'createdAt']);
+      return data.keys().hasAll(['email', 'displayName', 'photoURL', 'role', 'createdAt', 'updatedAt']) &&
+             data.email is string && data.email.size() <= 256 &&
+             data.displayName is string && data.displayName.size() <= 128 &&
+             data.role == 'user';
     }
 
     function isValidChild(data) {
       return data.parentId == request.auth.uid &&
-             data.name is string &&
+             data.name is string && data.name.size() <= 100 &&
              data.parentId is string;
     }
 
     function isValidMilestone(data) {
-      return data.parentId == request.auth.uid;
+      return data.parentId == request.auth.uid &&
+             data.title is string && data.title.size() <= 200 &&
+             data.type in ['motorFine', 'motorGross', 'language', 'social', 'cognitive'];
     }
 
     // --- Routes ---
 
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow create, update: if isOwner(userId) && isValidUserProfile(incoming());
+      allow create: if isOwner(userId) && isValidUserProfile(incoming()) && incoming().createdAt == request.time;
+      allow update: if isOwner(userId) && 
+                    incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']) &&
+                    incoming().updatedAt == request.time;
     }
 
     match /children/{childId} {
       allow list, get: if isSignedIn() && resource.data.parentId == request.auth.uid;
-      allow create: if isSignedIn() && incoming().parentId == request.auth.uid && isValidChild(incoming());
-      allow update: if isSignedIn() && existing().parentId == request.auth.uid && incoming().parentId == request.auth.uid && isValidChild(incoming());
+      allow create: if isSignedIn() && incoming().parentId == request.auth.uid && isValidChild(incoming()) && incoming().createdAt == request.time;
+      allow update: if isSignedIn() && existing().parentId == request.auth.uid && 
+                    incoming().parentId == request.auth.uid && 
+                    isValidChild(incoming()) &&
+                    incoming().diff(existing()).affectedKeys().hasAll(['updatedAt']) &&
+                    incoming().createdAt == existing().createdAt;
       allow delete: if isSignedIn() && existing().parentId == request.auth.uid;
 
       match /milestones/{milestoneId} {
         allow list, get: if isSignedIn() && resource.data.parentId == request.auth.uid;
-        allow create: if isSignedIn() && incoming().parentId == request.auth.uid && isValidMilestone(incoming());
-        allow update: if isSignedIn() && existing().parentId == request.auth.uid && incoming().parentId == request.auth.uid && isValidMilestone(incoming());
+        allow create: if isSignedIn() && incoming().parentId == request.auth.uid && isValidMilestone(incoming()) && incoming().createdAt == request.time;
+        allow update: if isSignedIn() && existing().parentId == request.auth.uid && 
+                      incoming().parentId == request.auth.uid && 
+                      isValidMilestone(incoming()) &&
+                      incoming().createdAt == existing().createdAt;
         allow delete: if isSignedIn() && existing().parentId == request.auth.uid;
       }
     }
@@ -64,13 +83,15 @@ service cloud.firestore {
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow create: if isSignedIn() && incoming().userId == request.auth.uid &&
                     incoming().role in ['user', 'assistant'] &&
-                    incoming().content is string && incoming().content.size() <= 10000;
+                    incoming().content is string && incoming().content.size() <= 10000 &&
+                    incoming().createdAt == request.time;
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
 
     match /quizResults/{resultId} {
       allow list, get: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn() && incoming().userId == request.auth.uid;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid &&
+                    incoming().createdAt == request.time;
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
   }

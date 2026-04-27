@@ -31,16 +31,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      // Force account selection to ensure they can pick their personal account
       provider.setCustomParameters({ prompt: 'select_account' });
       
       const result = await signInWithPopup(auth, provider);
       setIsMock(false);
 
-      // Sync user to Firestore
-      const userDoc = await getDoc(doc(db, 'users', result.user.uid));
-      if (!userDoc.exists()) {
-        await setDoc(doc(db, 'users', result.user.uid), {
+      // Sync user profile to Firestore
+      const userRef = doc(db, 'users', result.user.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
           email: result.user.email,
           displayName: result.user.displayName,
           photoURL: result.user.photoURL,
@@ -49,27 +50,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           updatedAt: serverTimestamp()
         });
       } else {
-        // Update last login
-        await setDoc(doc(db, 'users', result.user.uid), {
-          updatedAt: serverTimestamp()
+        await setDoc(userRef, {
+          updatedAt: serverTimestamp(),
+          photoURL: result.user.photoURL // Update photo in case it changed
         }, { merge: true });
       }
     } catch (err: any) {
       console.error('Auth Error:', err);
       
-      // Handle known Firebase errors
       if (err.code === 'auth/operation-not-supported-in-this-environment') {
-        alert('Trình duyệt của bạn không hỗ trợ cửa sổ bật lên (popup) hoặc đang bị chặn. Vui lòng mở ứng dụng trong tab mới hoặc dùng trình duyệt khác.');
+        alert('Trình duyệt của bạn đang chặn cửa sổ bật lên. Vui lòng mở ứng dụng trong tab mới hoặc dùng trình duyệt khác.');
       } else if (err.code === 'auth/popup-closed-by-user') {
-        // Silent closure
-        console.log('User closed the login popup');
+        console.log('Login cancelled by user');
       } else if (err.code === 'auth/unauthorized-domain') {
-        alert('Tên miền này chưa được cấp phép trong Firebase Console. Vui lòng kiểm tra cấu hình "Authorized domains".');
+        alert('Tên miền này chưa được cấp phép. Vui lòng thêm vào danh sách "Authorized domains" trong Firebase console.');
       } else {
-        alert(`Lỗi đăng nhập: ${err.message || 'Đã có lỗi xảy ra'}`);
+        alert('Đăng nhập không thành công. Vui lòng thử lại sau.');
       }
-      
-      // We no longer fall back to mock mode here to ensure "REAL" accounts are used
     } finally {
       setLoading(false);
     }

@@ -72,8 +72,13 @@ export default function Dashboard() {
   // New Milestone Form
   const [msForm, setMsForm] = useState({ title: '', date: '', description: '', type: 'motor' });
 
+  const [loadingData, setLoadingData] = useState(true);
+
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoadingData(false);
+      return;
+    }
 
     if (isMock) {
       const mockChildren = [
@@ -89,15 +94,21 @@ export default function Dashboard() {
       ];
       setChildren(mockChildren);
       setSelectedChild(mockChildren[0]);
+      setLoadingData(false);
       return;
     }
 
+    setLoadingData(true);
     const q = query(collection(db, 'children'), where('parentId', '==', user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setChildren(data);
       if (data.length > 0 && !selectedChild) setSelectedChild(data[0]);
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'children'));
+      setLoadingData(false);
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'children');
+      setLoadingData(false);
+    });
 
     return () => unsubscribe();
   }, [user, isMock]);
@@ -223,6 +234,17 @@ export default function Dashboard() {
     { subject: 'Tư duy logic', A: selectedChild.skillScores.logic, fullMark: 100 },
     { subject: 'Cảm xúc', A: selectedChild.skillScores.emotional, fullMark: 100 },
   ] : [];
+
+  if (loadingData) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin" />
+          <p className="text-slate-500 font-medium font-display">Đang tải hành trình của bé...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -360,8 +382,14 @@ export default function Dashboard() {
                         </span>
                       </div>
                       <button 
-                        onClick={() => deleteDoc(doc(db, `children/${selectedChild.id}/milestones`, ms.id))}
-                        className="text-slate-200 hover:text-red-500 transition-colors"
+                        onClick={async () => {
+                          try {
+                            await deleteDoc(doc(db, `children/${selectedChild.id}/milestones`, ms.id));
+                          } catch (err) {
+                            handleFirestoreError(err, OperationType.DELETE, `children/${selectedChild.id}/milestones/${ms.id}`);
+                          }
+                        }}
+                        className="text-slate-200 hover:text-red-500 transition-colors p-2"
                       >
                         <Trash2 size={18} />
                       </button>
