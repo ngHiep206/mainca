@@ -324,9 +324,9 @@ export default function Dashboard() {
                     Dựa trên các cột mốc
                   </div>
                </div>
-               <div className="h-80 w-full">
+               <div className="h-64 sm:h-80 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
+                  <RadarChart cx="50%" cy="50%" outerRadius={window.innerWidth < 640 ? "60%" : "80%"} data={chartData}>
                     <PolarGrid stroke="#e2e8f0" />
                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 12 }} />
                     <Radar
@@ -361,25 +361,39 @@ export default function Dashboard() {
                   <p className="text-slate-400 italic text-center py-10 bg-white rounded-3xl border border-slate-50">Chưa có cột mốc nào được ghi nhận.</p>
                 ) : (
                   milestones.map((ms) => (
-                    <div key={ms.id} className="p-6 rounded-3xl bg-white border border-slate-100 shadow-sm flex gap-6 hover:shadow-md transition-shadow">
-                      <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600 flex-shrink-0">
+                    <div key={ms.id} className="p-4 sm:p-6 rounded-3xl bg-white border border-slate-100 shadow-sm flex flex-col sm:flex-row gap-4 sm:gap-6 hover:shadow-md transition-shadow">
+                      <div className="w-12 h-12 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-600 flex-shrink-0 hidden sm:flex">
                          <Calendar size={24} />
                       </div>
                       <div className="flex-grow">
                         <div className="flex justify-between items-start mb-2">
-                           <h4 className="text-lg font-bold">{ms.title}</h4>
-                           <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
+                           <h4 className="text-base sm:text-lg font-bold">{ms.title}</h4>
+                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
                              {new Date(ms.date.seconds * 1000).toLocaleDateString('vi-VN')}
                            </span>
                         </div>
-                        <p className="text-sm text-slate-500 mb-4">{ms.description}</p>
-                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${
-                          ms.type === 'motor' ? 'bg-orange-100 text-orange-600' : 
-                          ms.type === 'language' ? 'bg-yellow-100 text-yellow-600' :
-                          ms.type === 'logic' ? 'bg-purple-100 text-purple-600' : 'bg-pink-100 text-pink-600'
-                        }`}>
-                          {ms.type}
-                        </span>
+                        <p className="text-xs sm:text-sm text-slate-500 mb-4">{ms.description}</p>
+                        <div className="flex justify-between items-center">
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase ${
+                            ms.type === 'motor' ? 'bg-orange-100 text-orange-600' : 
+                            ms.type === 'language' ? 'bg-yellow-100 text-yellow-600' :
+                            ms.type === 'logic' ? 'bg-purple-100 text-purple-600' : 'bg-pink-100 text-pink-600'
+                          }`}>
+                            {ms.type}
+                          </span>
+                          <button 
+                            onClick={async () => {
+                              try {
+                                await deleteDoc(doc(db, `children/${selectedChild.id}/milestones`, ms.id));
+                              } catch (err) {
+                                handleFirestoreError(err, OperationType.DELETE, `children/${selectedChild.id}/milestones/${ms.id}`);
+                              }
+                            }}
+                            className="text-slate-300 hover:text-red-500 transition-colors sm:hidden"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                       <button 
                         onClick={async () => {
@@ -389,7 +403,7 @@ export default function Dashboard() {
                             handleFirestoreError(err, OperationType.DELETE, `children/${selectedChild.id}/milestones/${ms.id}`);
                           }
                         }}
-                        className="text-slate-200 hover:text-red-500 transition-colors p-2"
+                        className="text-slate-200 hover:text-red-500 transition-colors p-2 hidden sm:block"
                       >
                         <Trash2 size={18} />
                       </button>

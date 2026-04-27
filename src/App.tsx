@@ -197,9 +197,9 @@ export default function App() {
       <BrowserRouter>
         <ScrollToTop />
         <AIChatbot />
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col bg-slate-50/50">
           <Header />
-          <main className="flex-grow">
+          <main className="flex-grow pb-20 md:pb-0">
             <React.Suspense fallback={
               <div className="min-h-screen flex items-center justify-center">
                 <motion.div 
@@ -224,8 +224,37 @@ export default function App() {
             </React.Suspense>
           </main>
           <Footer />
+          <MobileBottomNav />
         </div>
       </BrowserRouter>
     </AuthProvider>
+  );
+}
+
+function MobileBottomNav() {
+  const location = useLocation();
+  
+  const links = [
+    { name: 'Trang chủ', path: '/', icon: Baby },
+    { name: 'Đồ chơi', path: '/toys', icon: Sparkles },
+    { name: 'Cột mốc', path: '/dashboard', icon: BarChart3 },
+    { name: 'Kiến thức', path: '/blog', icon: BookOpen },
+  ];
+
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200 px-6 py-3 z-40 flex justify-between items-center safe-area-bottom">
+      {links.map((link) => (
+        <Link 
+          key={link.path}
+          to={link.path}
+          className={`flex flex-col items-center gap-1 transition-colors ${
+            location.pathname === link.path ? 'text-brand-600' : 'text-slate-400'
+          }`}
+        >
+          <link.icon size={22} className={location.pathname === link.path ? 'scale-110' : ''} />
+          <span className="text-[10px] font-bold uppercase tracking-tighter">{link.name}</span>
+        </Link>
+      ))}
+    </div>
   );
 }

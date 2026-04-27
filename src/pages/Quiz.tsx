@@ -14,7 +14,7 @@ import {
   Save
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { askPlayWiseAI } from '../lib/gemini';
+import { askPlayWiseAI } from '../lib/aiService';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -120,14 +120,14 @@ export default function Quiz() {
     <div className="min-h-[80vh] flex items-center justify-center p-4">
       <div className="w-full max-w-4xl">
         {/* Progress Tracker */}
-        <div className="flex justify-between mb-12 relative px-4">
+        <div className="flex justify-between mb-8 sm:mb-12 relative px-2 sm:px-4">
            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-100 -z-10" />
            {STEPS.map((step, i) => (
              <div key={step.id} className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                <div className={`w-8 h-8 sm:w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
                   i <= currentStep ? 'bg-brand-600 border-brand-600 text-white' : 'bg-white border-slate-200 text-slate-300'
                 }`}>
-                  {i < currentStep ? <CheckCircle2 size={20} /> : <span>{i + 1}</span>}
+                  {i < currentStep ? <CheckCircle2 size={16} /> : <span className="text-xs sm:text-base">{i + 1}</span>}
                 </div>
                 <span className={`text-[10px] font-bold uppercase mt-2 tracking-tighter hidden sm:block ${
                   i <= currentStep ? 'text-brand-600' : 'text-slate-400'
@@ -142,11 +142,11 @@ export default function Quiz() {
            key={currentStep}
            initial={{ opacity: 0, x: 20 }}
            animate={{ opacity: 1, x: 0 }}
-           className="glass-card rounded-[3rem] p-8 md:p-16 relative overflow-hidden"
+           className="glass-card rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-12 md:p-16 relative overflow-hidden"
         >
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-display font-bold mb-2">{STEPS[currentStep].title}</h2>
-            <p className="text-slate-500 mb-12">{STEPS[currentStep].description}</p>
+            <h2 className="text-2xl sm:text-3xl font-display font-bold mb-2">{STEPS[currentStep].title}</h2>
+            <p className="text-sm sm:text-base text-slate-500 mb-8 sm:mb-12">{STEPS[currentStep].description}</p>
 
             {currentStep === 0 && (
               <div className="text-center py-12">

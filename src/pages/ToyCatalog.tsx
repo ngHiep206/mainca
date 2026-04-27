@@ -98,8 +98,8 @@ export default function ToyCatalog() {
       <div className="lg:flex gap-8">
         {/* Sidebar Filters */}
         <aside className="lg:w-64 space-y-8 mb-8 lg:mb-0">
-          <div>
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-4">
+            <div className="relative flex-grow">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input 
                 type="text" 
@@ -116,19 +116,22 @@ export default function ToyCatalog() {
               <Brain size={18} className="text-brand-600" />
               Mục tiêu phát triển
             </h3>
-            <div className="space-y-2">
-              <FilterChip 
-                label="Tất cả" 
-                active={!selectedSkill} 
-                onClick={() => setSelectedSkill(null)} 
-              />
-              {Object.entries(SKILL_MAP).map(([id, { label }]) => (
+            <div className="flex lg:flex-col gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="flex-shrink-0 lg:w-full">
                 <FilterChip 
-                  key={id} 
-                  label={label} 
-                  active={selectedSkill === id} 
-                  onClick={() => setSelectedSkill(id)} 
+                  label="Tất cả" 
+                  active={!selectedSkill} 
+                  onClick={() => setSelectedSkill(null)} 
                 />
+              </div>
+              {Object.entries(SKILL_MAP).map(([id, { label }]) => (
+                <div key={id} className="flex-shrink-0 lg:w-full">
+                  <FilterChip 
+                    label={label} 
+                    active={selectedSkill === id} 
+                    onClick={() => setSelectedSkill(id)} 
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -236,8 +239,8 @@ function FilterChip({ label, active, onClick }: FilterChipProps) {
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-4 py-2 rounded-xl text-sm transition-all ${
-        active ? 'bg-brand-50 text-brand-700 font-bold' : 'text-slate-500 hover:bg-slate-50'
+      className={`whitespace-nowrap lg:whitespace-normal w-full text-left px-4 py-2 rounded-xl text-sm transition-all ${
+        active ? 'bg-brand-50 text-brand-700 font-bold border border-brand-200' : 'text-slate-500 hover:bg-slate-50 border border-transparent'
       }`}
     >
       {label}

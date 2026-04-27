@@ -36,10 +36,10 @@ export default function Home() {
               <Sparkles size={16} />
               <span>Cá nhân hóa theo từng tháng tuổi</span>
             </div>
-            <h1 className="text-5xl lg:text-7xl font-display font-bold leading-tight mb-8">
+            <h1 className="text-4xl sm:text-5xl lg:text-7xl font-display font-bold leading-[1.1] mb-6 sm:mb-8">
               Chọn đồ chơi <span className="text-brand-600 italic">đúng</span> - Con lớn khôn <span className="text-accent-strong underline decoration-brand-200">vượt trội</span>
             </h1>
-            <p className="text-lg text-slate-600 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            <p className="text-base sm:text-lg text-slate-600 mb-8 sm:mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed px-4 sm:px-0">
               PlayWise sử dụng khoa học phát triển để giúp cha mẹ tìm ra những món đồ chơi hoàn hảo, kích thích tư duy và hỗ trợ các cột mốc quan trọng nhất của bé.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">

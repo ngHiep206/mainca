@@ -149,13 +149,13 @@ export default function ToyDetail() {
         Quay lại
       </button>
 
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
+      <div className="grid lg:grid-cols-2 gap-8 lg:gap-20">
         {/* Left: Image & Quick Stats */}
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="aspect-square rounded-[3rem] overflow-hidden shadow-2xl shadow-brand-500/10"
+            className="aspect-square rounded-3xl sm:rounded-[3rem] overflow-hidden shadow-2xl shadow-brand-500/10"
           >
             <img src={toy.image} alt={toy.name} className="w-full h-full object-cover" />
           </motion.div>
@@ -192,9 +192,9 @@ export default function ToyDetail() {
                  ID: #{toy.id}
               </span>
             </div>
-            <h1 className="text-4xl lg:text-5xl font-display font-bold mb-6">{toy.name}</h1>
-            <p className="text-3xl font-bold text-slate-900 mb-8">{toy.price.toLocaleString('vi-VN')}đ</p>
-            <p className="text-slate-600 leading-relaxed text-lg">{toy.description}</p>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-4 sm:mb-6">{toy.name}</h1>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900 mb-6 sm:mb-8">{toy.price.toLocaleString('vi-VN')}đ</p>
+            <p className="text-slate-600 leading-relaxed text-base sm:text-lg">{toy.description}</p>
           </div>
 
           <div>

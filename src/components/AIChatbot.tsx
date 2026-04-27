@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MessageSquare, X, Send, Bot, User, Sparkles, ChevronDown, Trash2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
-import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, limit, deleteDoc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, onSnapshot, orderBy, limit, deleteDoc, getDocs, writeBatch, doc } from 'firebase/firestore';
 
 const MODELS = [
   { id: 'glm-4.5-flash', name: 'GLM 4.5 Flash' },
@@ -167,10 +167,10 @@ export default function AIChatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-24 right-6 w-[400px] max-w-[90vw] h-[600px] max-h-[80vh] bg-white rounded-3xl shadow-2xl z-50 flex flex-col overflow-hidden border border-slate-100"
+            className="fixed bottom-0 right-0 sm:bottom-24 sm:right-6 w-full sm:w-[400px] h-full sm:h-[600px] bg-white sm:rounded-3xl shadow-2xl z-50 flex flex-col overflow-hidden border border-slate-100"
           >
             {/* Header */}
-            <div className="p-6 bg-brand-600 text-white flex items-center justify-between">
+            <div className="p-4 sm:p-6 bg-brand-600 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                   <Bot size={24} />

@@ -1,7 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
-
 export async function askPlayWiseAI(prompt: string, context?: any) {
   const systemPrompt = `
     You are PlayWise AI, a virtual assistant expert in child developmental psychology and educational toys.
@@ -17,16 +13,24 @@ export async function askPlayWiseAI(prompt: string, context?: any) {
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        systemInstruction: systemPrompt
-      }
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        model: 'glm-4.5-flash' // Default Beeknowe model
+      })
     });
-    return response.text;
+
+    if (!response.ok) throw new Error('AI Service failed');
+
+    const data = await response.json();
+    return data.choices[0].message.content;
   } catch (error) {
-    console.error("Gemini AI Error:", error);
+    console.error("AI Service Error:", error);
     return "Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.";
   }
 }
