@@ -270,36 +270,36 @@ export default function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       {/* Header & Child Selector */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
-        <div>
-          <h1 className="text-4xl mb-4">Hành trình Phát triển</h1>
-          <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 md:mb-12">
+        <div className="w-full">
+          <h1 className="text-3xl md:text-4xl mb-6 md:mb-4 font-display font-bold">Hành trình Phát triển</h1>
+          <div className="flex flex-wrap gap-3 overflow-x-auto pb-4 md:pb-0 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
             {children.map(child => (
               <button
                 key={child.id}
                 onClick={() => setSelectedChild(child)}
-                className={`px-6 py-2 rounded-2xl flex items-center gap-2 transition-all shadow-sm border ${
-                  selectedChild?.id === child.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 border-slate-100 hover:border-brand-500'
+                className={`flex-shrink-0 px-5 py-2.5 rounded-2xl flex items-center gap-2 transition-all shadow-sm border ${
+                  selectedChild?.id === child.id ? 'bg-brand-600 text-white border-brand-600' : 'bg-white text-slate-600 border-slate-100 hover:border-brand-500 font-medium'
                 }`}
               >
-                <img src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${child.name}`} alt="" className="w-6 h-6 rounded-full bg-slate-100" />
-                <span className="font-bold">{child.name}</span>
+                <img src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${child.name}`} alt="" className="w-7 h-7 rounded-full bg-slate-100" />
+                <span className="font-bold text-sm">{child.name}</span>
               </button>
             ))}
             <button 
               onClick={() => setIsAddingChild(true)}
-              className="px-4 py-2 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 hover:text-brand-600 hover:border-brand-600 transition-all flex items-center gap-2"
+              className="flex-shrink-0 px-4 py-2 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 hover:text-brand-600 hover:border-brand-600 transition-all flex items-center gap-2 font-bold text-sm"
             >
-              <Plus size={20} />
+              <Plus size={18} />
               Thêm bé
             </button>
           </div>
         </div>
         
         {selectedChild && (
-           <div className="flex items-center gap-3 p-4 bg-accent-soft rounded-2xl text-accent-strong border border-pink-100">
+           <div className="hidden md:flex items-center gap-3 p-4 bg-accent-soft rounded-2xl text-accent-strong border border-pink-100 whitespace-nowrap">
               <Sparkles size={20} />
-              <p className="text-sm font-bold">Gợi ý: Bé đang cần tập trung vào Ngôn ngữ</p>
+              <p className="text-sm font-bold">Gợi ý: Bé cần luyện tập thêm nhóm Ngôn ngữ</p>
            </div>
         )}
       </div>

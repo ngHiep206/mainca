@@ -21,16 +21,26 @@ export async function askPlayWiseAI(prompt: string, context?: any) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: prompt }
         ],
-        model: 'glm-4.5-flash' // Default Beeknowe model
+        model: 'glm-4-flash' 
       })
     });
 
-    if (!response.ok) throw new Error('AI Service failed');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('AI Service Proxy Error:', response.status, errorData);
+      throw new Error(errorData.error || `Request failed with status ${response.status}`);
+    }
 
     const data = await response.json();
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('AI Service Malformed Response:', data);
+      throw new Error('Hệ thống AI trả về dữ liệu không hợp lệ');
+    }
     return data.choices[0].message.content;
-  } catch (error) {
-    console.error("AI Service Error:", error);
-    return "Xin lỗi, tôi gặp sự cố khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.";
+  } catch (error: any) {
+    console.error("AI Service Component Error:", error);
+    return `Xin lỗi, đã xảy ra lỗi: ${error.message || 'Không thể kết nối với hệ thống AI'}. 
+
+Ba mẹ hãy kiểm tra lại BEEKNOEE_API_KEY trong phần Secrets của AI Studio.`;
   }
 }

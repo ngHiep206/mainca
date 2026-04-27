@@ -64,9 +64,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log('Login cancelled by user');
       } else if (err.code === 'auth/unauthorized-domain') {
         const domain = window.location.hostname;
-        alert(`Tên miền "${domain}" chưa được cấp phép. 
+        console.error('Domain not authorized:', domain);
+        alert(`LỖI: Tên miền chưa được cấp phép!
 
-Vui lòng copy tên miền trên và thêm vào danh sách "Authorized domains" trong Firebase Console (Authentication > Settings > Authorized domains).`);
+Nếu bạn vừa mới thêm tên miền vào Firebase Console:
+1. Vui lòng ĐỢI 2-3 PHÚT để Firebase cập nhật.
+2. Đảm bảo bạn KHÔNG dán "https://" vào Firebase (chỉ dán: ${domain}).
+3. Thử tải lại trang (Refresh).
+
+Nếu vẫn không được, hãy thử mở app trong tab mới.`);
       } else {
         alert('Đăng nhập không thành công. Vui lòng thử lại sau.');
       }

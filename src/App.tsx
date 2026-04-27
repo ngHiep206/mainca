@@ -98,45 +98,18 @@ function Header() {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-slate-500">
-              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
+          {/* Mobile menu button - simplified as we have bottom nav */}
+          <div className="md:hidden flex items-center gap-4">
+            {user ? (
+              <Link to="/dashboard" className="w-9 h-9 rounded-full overflow-hidden border border-brand-100">
+                <img src={user.photoURL || ''} alt="" className="w-full h-full object-cover" />
+              </Link>
+            ) : (
+              <GoogleLoginButton text="Login" className="py-1.5 px-4 text-xs h-9" />
+            )}
           </div>
         </div>
       </div>
-
-      {/* Mobile Nav */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-t border-slate-100 overflow-hidden"
-          >
-            <div className="px-4 pt-2 pb-6 space-y-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-600"
-                >
-                  <link.icon size={20} />
-                  <span className="font-medium">{link.name}</span>
-                </Link>
-              ))}
-              {!user && (
-                <div className="pt-4">
-                  <GoogleLoginButton className="w-full" />
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </nav>
   );
 }
