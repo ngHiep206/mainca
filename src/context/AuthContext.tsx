@@ -56,24 +56,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err: any) {
       console.error('Auth Error:', err);
-      // Only use mock mode if specifically in a development environment without keys
-      if (err.code === 'auth/operation-not-supported-in-this-environment' || err.code === 'auth/invalid-api-key') {
-        console.warn('Entering Mock Mode due to environment constraints');
-        const mockUser = {
-          uid: 'mock-user-123',
-          displayName: 'Phụ huynh (Demo Mode)',
-          email: 'parent@example.com',
-          photoURL: 'https://api.dicebear.com/7.x/avataaars/svg?seed=mock-parent',
-          emailVerified: true,
-        } as User;
-        setUser(mockUser);
-        setIsMock(true);
+      
+      // Handle known Firebase errors
+      if (err.code === 'auth/operation-not-supported-in-this-environment') {
+        alert('Trình duyệt của bạn không hỗ trợ cửa sổ bật lên (popup) hoặc đang bị chặn. Vui lòng mở ứng dụng trong tab mới hoặc dùng trình duyệt khác.');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        // Silent closure
+        console.log('User closed the login popup');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        alert('Tên miền này chưa được cấp phép trong Firebase Console. Vui lòng kiểm tra cấu hình "Authorized domains".');
       } else {
-        // Re-throw or handle user cancellation
-        if (err.code !== 'auth/popup-closed-by-user') {
-          alert('Đăng nhập thất bại. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.');
-        }
+        alert(`Lỗi đăng nhập: ${err.message || 'Đã có lỗi xảy ra'}`);
       }
+      
+      // We no longer fall back to mock mode here to ensure "REAL" accounts are used
     } finally {
       setLoading(false);
     }
