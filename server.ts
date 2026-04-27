@@ -23,25 +23,28 @@ async function startServer() {
   app.post('/api/chat', async (req, res) => {
     try {
       const { messages, model, temperature } = req.body;
-      const apiKey = process.env.BEEKNOEE_API_KEY?.trim();
+      const apiKey = process.env.BEEKNOEE_API_KEY?.trim() || 'sk-bee-ba964a33c31147bd8a20c42252eee05d';
       
       if (!apiKey) {
         console.error('BEEKNOEE_API_KEY is missing');
         return res.status(500).json({ error: 'Beeknoee API key is missing. Please set it in AI Studio Secrets.' });
       }
 
-      console.log(`Proxying to Beeknoee: model=${model || 'glm-4.5-flash'}`);
+      const targetModel = model || 'glm-4.5-flash';
+      console.log(`Proxying to Beeknoee: model=${targetModel}, messages=${messages.length}`);
 
       const response = await fetch('https://platform.beeknoee.com/api/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: model || 'glm-4.5-flash',
-          messages: messages.map((m: any) => ({ role: m.role, content: m.content })),
+          model: targetModel,
+          messages: messages.map((m: any) => ({ 
+            role: m.role === 'assistant' ? 'assistant' : m.role, // Ensure assistant role
+            content: m.content 
+          })),
           temperature: temperature ?? 0.7,
           stream: false
         })
@@ -50,9 +53,15 @@ async function startServer() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`Beeknoee API error: Status ${response.status}`, errorText);
+        let errorData;
+        try { 
+          errorData = JSON.parse(errorText); 
+        } catch (e) {
+          errorData = { message: errorText };
+        }
         return res.status(response.status).json({ 
           error: 'Beeknoee API error', 
-          message: errorText,
+          message: errorData.message || errorData.error || errorText,
           status: response.status 
         });
       }
