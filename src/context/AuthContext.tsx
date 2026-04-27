@@ -63,7 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else if (err.code === 'auth/popup-closed-by-user') {
         console.log('Login cancelled by user');
       } else if (err.code === 'auth/unauthorized-domain') {
-        alert('Tên miền này chưa được cấp phép. Vui lòng thêm vào danh sách "Authorized domains" trong Firebase console.');
+        const domain = window.location.hostname;
+        alert(`Tên miền "${domain}" chưa được cấp phép. 
+
+Vui lòng copy tên miền trên và thêm vào danh sách "Authorized domains" trong Firebase Console (Authentication > Settings > Authorized domains).`);
       } else {
         alert('Đăng nhập không thành công. Vui lòng thử lại sau.');
       }
