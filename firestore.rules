@@ -1,0 +1,153 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitives
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    function isSignedIn() { 
+      return request.auth != null; 
+    }
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    // Admin check: assumes a collection 'admins' exists where doc ID is the UID
+    function isAdmin() { 
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); 
+    }
+
+    // 1. User Profiles
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      
+      allow create: if isEmailVerified() 
+        && request.auth.uid == userId
+        && isValidUser(incoming())
+        && incoming().role == 'user'; 
+        
+      allow update: if isEmailVerified() 
+        && request.auth.uid == userId
+        && isValidUser(incoming())
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName'])
+          && incoming().role == existing().role
+        );
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'displayName', 'role', 'createdAt'])
+        && data.email is string && data.email.size() <= 200
+        && (data.displayName == null || (data.displayName is string && data.displayName.size() <= 100))
+        && data.role in ['user', 'admin']
+        && data.createdAt == request.time;
+    }
+
+    // 2. Children Profiles
+    match /children/{childId} {
+      allow get: if isSignedIn() && (existing().parentId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && resource.data.parentId == request.auth.uid;
+      
+      allow create: if isEmailVerified() 
+        && isValidId(childId)
+        && isValidChild(incoming())
+        && incoming().parentId == request.auth.uid;
+
+      allow update: if isEmailVerified()
+        && existing().parentId == request.auth.uid
+        && isValidChild(incoming())
+        && incoming().parentId == existing().parentId
+        && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'birthDate', 'gender', 'skillScores'])
+        );
+
+      allow delete: if isEmailVerified() && (existing().parentId == request.auth.uid || isAdmin());
+
+      // Milestones subcollection
+      match /milestones/{milestoneId} {
+        allow get: if isSignedIn() && (get(/databases/$(database)/documents/children/$(childId)).data.parentId == request.auth.uid || isAdmin());
+        allow list: if isSignedIn() && resource.data.parentId == request.auth.uid;
+        
+        allow create: if isEmailVerified()
+          && isValidId(milestoneId)
+          && isValidMilestone(incoming())
+          && incoming().parentId == request.auth.uid
+          && get(/databases/$(database)/documents/children/$(childId)).data.parentId == request.auth.uid;
+          
+        allow update: if isEmailVerified()
+          && incoming().parentId == request.auth.uid
+          && get(/databases/$(database)/documents/children/$(childId)).data.parentId == request.auth.uid
+          && isValidMilestone(incoming())
+          && incoming().childId == existing().childId
+          && (
+             incoming().diff(existing()).affectedKeys().hasOnly(['title', 'date', 'description', 'type'])
+          );
+          
+        allow delete: if isEmailVerified() && (get(/databases/$(database)/documents/children/$(childId)).data.parentId == request.auth.uid || isAdmin());
+      }
+    }
+
+    function isValidChild(data) {
+      return data.keys().hasAll(['parentId', 'name', 'birthDate', 'gender', 'skillScores', 'createdAt'])
+        && data.name is string && data.name.size() <= 100
+        && data.birthDate is timestamp
+        && data.gender in ['male', 'female', 'other']
+        && data.skillScores is map
+        && data.createdAt == request.time;
+    }
+
+    function isValidMilestone(data) {
+      return data.keys().hasAll(['parentId', 'childId', 'title', 'date', 'description', 'type', 'createdAt'])
+        && data.parentId == request.auth.uid
+        && data.childId is string
+        && data.title is string && data.title.size() <= 200
+        && data.date is timestamp
+        && data.description is string && data.description.size() <= 1000
+        && data.type in ['motor', 'language', 'logic', 'emotional']
+        && data.createdAt == request.time;
+    }
+
+    // 3. Toys
+    match /toys/{toyId} {
+      allow read: if true; // Publicly readable
+      allow write: if isAdmin(); // Only admins can modify the catalog
+    }
+
+    // 4. Consultation Requests
+    match /consultations/{requestId} {
+      allow create: if isSignedIn()
+        && isValidId(requestId)
+        && isValidConsultation(incoming())
+        && incoming().userId == request.auth.uid
+        && incoming().status == 'pending';
+        
+      allow get: if isSignedIn() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      
+      allow update: if isAdmin(); // Only admins update consultation status
+    }
+
+    function isValidConsultation(data) {
+      return data.keys().hasAll(['userId', 'email', 'message', 'status', 'createdAt'])
+        && data.email is string && data.email.size() <= 200
+        && data.message is string && data.message.size() <= 2000
+        && data.status in ['pending', 'contacted', 'completed']
+        && data.createdAt == request.time;
+    }
+
+    // Admin verification collection (only writeable by direct cloud console / service accounts)
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if false; 
+    }
+  }
+}

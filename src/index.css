@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  
+  --color-brand-50: #fffbf0;
+  --color-brand-100: #ffedd5;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #f97316;
+  --color-brand-600: #ea580c;
+  --color-brand-700: #c2410c;
+  
+  --color-accent-soft: #f0fdfa;
+  --color-accent-strong: #14b8a6;
+  --color-accent-dark: #0d9488;
+}
+
+@layer base {
+  body {
+    @apply bg-[#FFFBF0] text-slate-800 font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-display font-bold tracking-tight;
+  }
+}
+
+.glass-card {
+  @apply bg-white/90 backdrop-blur-md border border-orange-100 shadow-sm rounded-[32px];
+}
+
+.btn-primary {
+  @apply bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-2xl font-semibold transition-all active:scale-95 shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2;
+}
+
+.btn-secondary {
+  @apply bg-white border border-brand-100 hover:bg-brand-50 text-brand-700 px-6 py-3 rounded-2xl font-semibold transition-all active:scale-95 flex items-center justify-center gap-2;
+}
+
