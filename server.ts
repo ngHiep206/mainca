@@ -23,15 +23,29 @@ async function startServer() {
   app.post('/api/chat', async (req, res) => {
     try {
       const { messages, model, temperature } = req.body;
-      const apiKey = process.env.BEEKNOEE_API_KEY?.trim() || 'sk-bee-ba964a33c31147bd8a20c42252eee05d';
       
-      if (!apiKey) {
-        console.error('BEEKNOEE_API_KEY is missing');
-        return res.status(500).json({ error: 'Beeknoee API key is missing. Please set it in AI Studio Secrets.' });
+      if (!messages || !Array.isArray(messages)) {
+        return res.status(400).json({ error: 'Invalid messages format' });
+      }
+
+      const envApiKey = process.env.BEEKNOEE_API_KEY?.trim();
+      const apiKey = envApiKey || 'sk-bee-ba964a33c31147bd8a20c42252eee05d';
+      
+      if (!envApiKey) {
+        console.warn('[Proxy] BEEKNOEE_API_KEY environment variable is NOT set, using default key.');
+      } else {
+        console.log('[Proxy] Using API key from environment variables.');
       }
 
       const targetModel = model || 'glm-4.5-flash';
-      console.log(`Proxying to Beeknoee: model=${targetModel}, messages=${messages.length}`);
+      
+      const payloadMessages = messages.map((m: any) => ({ 
+        role: m.role === 'assistant' ? 'assistant' : (m.role === 'system' ? 'system' : 'user'), 
+        content: String(m.content || '') 
+      }));
+
+      console.log(`[Proxy] Request: model=${targetModel}, messages=${payloadMessages.length}`);
+      // console.log('[Proxy] First message role:', payloadMessages[0]?.role);
 
       const response = await fetch('https://platform.beeknoee.com/api/v1/chat/completions', {
         method: 'POST',
@@ -41,10 +55,7 @@ async function startServer() {
         },
         body: JSON.stringify({
           model: targetModel,
-          messages: messages.map((m: any) => ({ 
-            role: m.role === 'assistant' ? 'assistant' : m.role, // Ensure assistant role
-            content: m.content 
-          })),
+          messages: payloadMessages,
           temperature: temperature ?? 0.7,
           stream: false
         })
@@ -52,24 +63,31 @@ async function startServer() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`Beeknoee API error: Status ${response.status}`, errorText);
+        console.error(`[Proxy] External API Error: Status ${response.status}`, errorText);
+        
         let errorData;
-        try { 
-          errorData = JSON.parse(errorText); 
+        try {
+          errorData = JSON.parse(errorText);
         } catch (e) {
           errorData = { message: errorText };
         }
-        return res.status(response.status).json({ 
-          error: 'Beeknoee API error', 
+        
+        return res.status(response.status).json({
+          error: 'External API Error',
           message: errorData.message || errorData.error || errorText,
-          status: response.status 
+          status: response.status
         });
       }
 
       const data = await response.json();
       res.json(data);
     } catch (error: any) {
-      res.status(500).json({ error: 'Server Error', details: error.message });
+      console.error('[Proxy] Server Internal Error:', error);
+      res.status(500).json({ 
+        error: 'Server Error', 
+        message: error.message,
+        details: error.stack 
+      });
     }
   });
 
