@@ -142,7 +142,7 @@ export default function AIChatbot() {
     <>
       {/* Trigger Button */}
       <button 
-        onClick={() => setIsOpen(true)}
+        onClick={() => setIsOpen(!isOpen)}
         className="fixed bottom-6 right-6 w-14 h-14 bg-brand-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50 group"
       >
         <MessageSquare size={28} className="group-hover:rotate-12 transition-transform" />
